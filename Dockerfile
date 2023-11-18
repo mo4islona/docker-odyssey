@@ -1,8 +1,4 @@
-FROM debian:buster-slim as builder
-# Version of https://github.com/yandex/odyssey/issues/29#issuecomment-401326964
-#
-
-# ENV DEF_ODYSSEY_CONF /etc/odyssey/odyssey.conf
+FROM debian:bookworm-slim as builder
 
 WORKDIR /tmp/
 
@@ -25,13 +21,14 @@ RUN set -ex \
        gcc \
        gdb \
        git \
-       libpam0g-dev \
+       libpam-dev \
+       libzstd-dev \
+       zlib1g-dev \
        valgrind \
-       libpq5 \
        libpq-dev \
        vim \
        postgresql-common \
-       postgresql-server-dev-15 \
+       postgresql-server-dev-all \
     && git clone https://github.com/yandex/odyssey.git \
     && cd odyssey \
     && mkdir build \
@@ -39,12 +36,13 @@ RUN set -ex \
     && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_DEBIAN=1 -DUSE_SCRAM=1 .. \
     && make
 
-FROM debian:buster-slim
+FROM debian:bookworm-slim
 
 RUN set -ex \
     && apt-get update \
     && apt-get install -y --no-install-recommends \
-        libssl-dev \
+        libssl-dev  \
+        openssl  \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 COPY --from=builder /tmp/odyssey/build/sources/odyssey /usr/local/bin/
 
